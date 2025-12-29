@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc="cli-based activity tracker and session manager for hyprland"
 arch=('any')
 url="https://github.com/livaiyena/sessionmanager"
-license=('MIT')
+license=('GPL3')
 depends=('python' 'sqlite' 'hyprland')
 optdepends=(
     'fish: fish shell completion support'
@@ -41,5 +41,4 @@ package() {
     
     # install documentation
     install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-    install -Dm644 AUR_GUIDE.md "$pkgdir/usr/share/doc/$pkgname/AUR_GUIDE.md"
 }
