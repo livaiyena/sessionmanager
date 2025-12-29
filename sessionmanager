@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+
+"""
+session manager and activity tracker for hyprland
+main entry point - installed to /usr/bin/sessionmanager
+"""
+
+import sys
+import argparse
+from sessionmanager.cli import CLI
+
+
+def main():
+    """main entry point with argument parsing"""
+    parser = argparse.ArgumentParser(
+        description='session manager and activity tracker for hyprland'
+    )
+    subparsers = parser.add_subparsers(dest='command', help='available commands')
+    
+    # monitor commands
+    monitor_parser = subparsers.add_parser('monitor', help='monitor daemon control')
+    monitor_subparsers = monitor_parser.add_subparsers(dest='action')
+    monitor_subparsers.add_parser('start', help='start monitoring daemon')
+    monitor_subparsers.add_parser('stop', help='stop monitoring daemon')
+    monitor_subparsers.add_parser('status', help='check daemon status')
+    
+    # session commands
+    session_parser = subparsers.add_parser('session', help='session management')
+    session_subparsers = session_parser.add_subparsers(dest='action')
+    
+    start_parser = session_subparsers.add_parser('start', help='start work session')
+    start_parser.add_argument('--topic', help='session topic')
+    start_parser.add_argument('--description', help='session description')
+    start_parser.add_argument('--duration', type=int, help='duration in minutes')
+    start_parser.add_argument('--macro', help='use saved macro template')
+    
+    session_subparsers.add_parser('stop', help='end current session')
+    session_subparsers.add_parser('current', help='show current session info')
+    
+    # report commands
+    report_parser = subparsers.add_parser('report', help='activity reports')
+    report_subparsers = report_parser.add_subparsers(dest='action')
+    report_subparsers.add_parser('daily', help='daily activity summary')
+    report_subparsers.add_parser('weekly', help='weekly activity summary')
+    
+    # macro commands
+    macro_parser = subparsers.add_parser('macro', help='macro management')
+    macro_subparsers = macro_parser.add_subparsers(dest='action')
+    macro_subparsers.add_parser('list', help='list saved macros')
+    
+    create_parser = macro_subparsers.add_parser('create', help='create new macro')
+    create_parser.add_argument('--name', required=True, help='macro name')
+    create_parser.add_argument('--topic', required=True, help='session topic')
+    create_parser.add_argument('--description', required=True, help='session description')
+    create_parser.add_argument('--duration', type=int, required=True, help='duration in minutes')
+    
+    delete_parser = macro_subparsers.add_parser('delete', help='delete macro')
+    delete_parser.add_argument('--name', required=True, help='macro name')
+    
+    run_parser = macro_subparsers.add_parser('run', help='run saved macro')
+    run_parser.add_argument('--name', required=True, help='macro name')
+    
+    # whitelist commands
+    whitelist_parser = subparsers.add_parser('whitelist', help='protected apps management')
+    whitelist_subparsers = whitelist_parser.add_subparsers(dest='action')
+    whitelist_subparsers.add_parser('list', help='list protected applications')
+    
+    add_whitelist_parser = whitelist_subparsers.add_parser('add', help='add protected app')
+    add_whitelist_parser.add_argument('--app', required=True, help='application class to protect')
+    
+    remove_whitelist_parser = whitelist_subparsers.add_parser('remove', help='remove protected app')
+    remove_whitelist_parser.add_argument('--app', required=True, help='application class to unprotect')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return
+    
+    cli = CLI()
+    
+    # route commands
+    if args.command == 'monitor':
+        if args.action == 'start':
+            cli.monitor_start()
+        elif args.action == 'stop':
+            cli.monitor_stop()
+        elif args.action == 'status':
+            cli.monitor_status()
+        else:
+            monitor_parser.print_help()
+    
+    elif args.command == 'session':
+        if args.action == 'start':
+            if args.macro:
+                cli.session_start(None, None, None, macro=args.macro)
+            elif args.topic and args.description and args.duration:
+                cli.session_start(args.topic, args.description, args.duration)
+            else:
+                print("error: provide either --macro or --topic --description --duration")
+                start_parser.print_help()
+        elif args.action == 'stop':
+            cli.session_stop()
+        elif args.action == 'current':
+            cli.session_current()
+        else:
+            session_parser.print_help()
+    
+    elif args.command == 'report':
+        if args.action == 'daily':
+            cli.report_daily()
+        elif args.action == 'weekly':
+            cli.report_weekly()
+        else:
+            report_parser.print_help()
+    
+    elif args.command == 'macro':
+        if args.action == 'list':
+            cli.macro_list()
+        elif args.action == 'create':
+            cli.macro_create(args.name, args.topic, args.description, args.duration)
+        elif args.action == 'delete':
+            cli.macro_delete(args.name)
+        elif args.action == 'run':
+            cli.macro_run(args.name)
+        else:
+            macro_parser.print_help()
+    
+    elif args.command == 'whitelist':
+        if args.action == 'list':
+            cli.whitelist_list()
+        elif args.action == 'add':
+            cli.whitelist_add(args.app)
+        elif args.action == 'remove':
+            cli.whitelist_remove(args.app)
+        else:
+            whitelist_parser.print_help()
+
+
+if __name__ == '__main__':
+    main()

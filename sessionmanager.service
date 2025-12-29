@@ -1,0 +1,13 @@
+[Unit]
+Description=session manager activity tracking daemon
+After=graphical-session.target
+
+[Service]
+Type=forking
+ExecStart=%h/Documents/niceideas/sessionmanager/session_manager.py monitor start
+ExecStop=%h/Documents/niceideas/sessionmanager/session_manager.py monitor stop
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
