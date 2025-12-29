@@ -1,4 +1,4 @@
-# Bash completion for session_manager.py
+# Bash completion for sessionmanager
 
 _session_manager_completions()
 {
@@ -47,7 +47,7 @@ _session_manager_completions()
                 return 0
                 ;;
             --macro)
-                local macros=$(python3 session_manager.py macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)
+                local macros=$(sessionmanager macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)
                 COMPREPLY=( $(compgen -W "${macros}" -- ${cur}) )
                 return 0
                 ;;
@@ -87,7 +87,7 @@ _session_manager_completions()
             delete|run)
                 case "${prev}" in
                     --name)
-                        local macros=$(python3 session_manager.py macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)
+                        local macros=$(sessionmanager macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)
                         COMPREPLY=( $(compgen -W "${macros}" -- ${cur}) )
                         return 0
                         ;;
@@ -161,9 +161,9 @@ _session_manager_completions()
     return 0
 }
 
-complete -o nospace -F _session_manager_completions session_manager.py
-complete -o nospace -F _session_manager_completions python3\ session_manager.py
-complete -o nospace -F _session_manager_completions ./session_manager.py
+complete -o nospace -F _session_manager_completions sessionmanager
+complete -o nospace -F _session_manager_completions python3\ sessionmanager
+complete -o nospace -F _session_manager_completions ./sessionmanager
 
 # completions for the installed binary
 complete -o nospace -F _session_manager_completions sessionmanager

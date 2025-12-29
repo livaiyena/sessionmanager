@@ -1,4 +1,4 @@
-#compdef sessionmanager session_manager.py
+#compdef sessionmanager
 
 # Zsh completion for sessionmanager
 
@@ -138,7 +138,7 @@ _session_whitelist() {
 # get list of saved macros
 _session_macros() {
     local macros
-    macros=(${(f)"$(python3 session_manager.py macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)"})
+    macros=(${(f)"$(sessionmanager macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)"})
     _describe 'macro names' macros
 }
 

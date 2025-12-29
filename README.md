@@ -53,7 +53,7 @@ cd ~/Documents/sessionmanager
 
 2. Make the script executable:
 ```bash
-chmod +x session_manager.py
+chmod +x sessionmanager
 ```
 
 3. Run the installation script for aliases:
@@ -71,7 +71,7 @@ The installer automatically detects and configures Bash, Zsh, and Fish shells.
 
 4. Manually start the monitor daemon:
 ```bash
-python3 session_manager.py monitor start
+sessionmanager monitor start
 ```
 
 ## Usage
@@ -81,22 +81,9 @@ python3 session_manager.py monitor start
 The monitor daemon runs in the background and tracks window activity.
 
 ```bash
-# with aur installation
 sessionmanager monitor start
 sessionmanager monitor status
 sessionmanager monitor stop
-
-# with manual installation
-python3 session_manager.py monitor start
-python3 session_manager.py monitor status
-python3 session_manager.py monitor stop
-```
-
-With aliases (manual installation):
-```bash
-sm-start    # start daemon
-sm-status   # check status
-sm-stop     # stop daemon
 ```
 
 ### Work Sessions
@@ -104,20 +91,9 @@ sm-stop     # stop daemon
 Create focused work sessions with automatic enforcement when time expires.
 
 ```bash
-# aur installation
 sessionmanager session start --topic "Development" --description "API implementation" --duration 120
 sessionmanager session current
 sessionmanager session stop
-
-# manual installation
-python3 session_manager.py session start --topic "Development" --description "API implementation" --duration 120
-```
-
-With aliases:
-```bash
-sm-session --topic "Development" --description "API work" --duration 120
-sm-current
-sm-end
 ```
 
 **Important**: When a session timer expires, all applications that were focused during that session will be automatically terminated (graceful SIGTERM followed by SIGKILL if needed), except for whitelisted applications.
@@ -127,14 +103,9 @@ sm-end
 Protect critical applications from being terminated when sessions expire.
 
 ```bash
-# aur installation
 sessionmanager whitelist list
 sessionmanager whitelist add --app firefox
 sessionmanager whitelist remove --app firefox
-
-# manual installation  
-python3 session_manager.py whitelist list
-python3 session_manager.py whitelist add --app firefox
 ```
 
 Default protected applications:
@@ -150,32 +121,26 @@ Save frequently used session configurations as macros for quick access.
 
 ```bash
 # create a macro
-python session_manager.py macro create \
+sessionmanager macro create \
   --name coding \
   --topic "Development" \
   --description "Coding session" \
   --duration 90
 
 # list all macros
-python session_manager.py macro list
+sessionmanager macro list
 
 # start session using macro
-python session_manager.py macro run --name coding
+sessionmanager macro run --name coding
 
 # alternative shorthand
-python session_manager.py session start --macro coding
+sessionmanager session start --macro coding
 
 # delete macro
-python session_manager.py macro delete --name coding
+sessionmanager macro delete --name coding
 ```
 
-With aliases:
-```bash
-sm-macro-create --name coding --topic "Dev" --description "Code" --duration 90
-sm-macros
-sm-macro-run --name coding
-sm-macro-delete --name coding
-```
+
 
 ### Activity Reports
 
@@ -183,17 +148,13 @@ View summaries of your tracked activity.
 
 ```bash
 # daily report (today)
-python session_manager.py report daily
+sessionmanager report daily
 
 # weekly report (past 7 days)
-python session_manager.py report weekly
+sessionmanager report weekly
 ```
 
-With aliases:
-```bash
-sm-daily
-sm-weekly
-```
+
 
 ## Project Structure
 
@@ -207,7 +168,7 @@ sessionmanager/
 │       ├── monitor.py           # Hyprland monitoring daemon
 │       ├── enforcer.py          # PID termination logic
 │       └── cli.py               # CLI interface
-├── session_manager.py           # Main entry point
+├── sessionmanager               # Main entry point (binary)
 ├── README.md                    # This file
 ├── install.sh                   # Alias installer
 └── sessionmanager.service       # Systemd service file
@@ -251,7 +212,7 @@ The application is organized into focused modules:
 - **monitor.py**: Hyprland integration and daemon logic
 - **enforcer.py**: Session enforcement and PID termination
 - **cli.py**: All command-line interface implementations
-- **session_manager.py**: Lightweight entry point with argparse
+- **sessionmanager**: Lightweight entry point with argparse
 
 ## Configuration
 
@@ -289,8 +250,8 @@ Check the monitor log output for termination details.
 
 If you see database locking errors, ensure only one monitor daemon is running:
 ```bash
-python session_manager.py monitor status
-python session_manager.py monitor stop
+sessionmanager monitor status
+sessionmanager monitor stop
 ```
 
 ### Stale PID file
@@ -300,48 +261,32 @@ If the daemon crashes, you may have a stale PID file:
 rm ~/.local/share/sessionmanager/monitor.pid
 ```
 
-## Available Aliases
 
-After running `install.sh`, these aliases are available:
-
-| Alias | Command |
-|-------|---------|
-| `sm` | Base command |
-| `sm-start` | Start monitoring daemon |
-| `sm-stop` | Stop monitoring daemon |
-| `sm-status` | Check daemon status |
-| `sm-session` | Start work session |
-| `sm-end` | End current session |
-| `sm-current` | Show current session |
-| `sm-daily` | Daily activity report |
-| `sm-weekly` | Weekly activity report |
-| `sm-macros` | List all macros |
-| `sm-macro-create` | Create new macro |
-| `sm-macro-run` | Run saved macro |
-| `sm-macro-delete` | Delete macro |
 
 ## Example Workflow
 
 ```bash
-# start monitoring (one time setup)
-sm-start
+# start monitoring (one time setup with systemd)
+systemctl --user start sessionmanager
+
+# or manually
+sessionmanager monitor start
 
 # create some macros for common tasks
-sm-macro-create --name focus --topic "Deep Work" --description "Focused coding" --duration 120
-sm-macro-create --name meeting --topic "Meetings" --description "Team sync" --duration 60
-sm-macro-create --name learning --topic "Learning" --description "Study session" --duration 90
+sessionmanager macro create --name focus --topic "Deep Work" --description "Focused coding" --duration 120
+sessionmanager macro create --name meeting --topic "Meetings" --description "Team sync" --duration 60
 
-# start a deep work session
-sm-macro-run --name focus
+# start a session using a macro
+sessionmanager macro run --name focus
 
-# check status
-sm-current
+# check current session
+sessionmanager session current
 
-# when done or if interrupted, end early
-sm-end
+# when done, end early
+sessionmanager session stop
 
 # view your daily productivity
-sm-daily
+sessionmanager report daily
 ```
 
 ## Updating
