@@ -1,6 +1,6 @@
-#compdef session_manager.py
+#compdef sessionmanager session_manager.py
 
-# Zsh completion for session_manager.py
+# Zsh completion for sessionmanager
 
 _session_manager() {
     local line state
