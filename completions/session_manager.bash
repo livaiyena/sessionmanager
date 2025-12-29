@@ -161,12 +161,15 @@ _session_manager_completions()
     return 0
 }
 
-complete -F _session_manager_completions session_manager.py
-complete -F _session_manager_completions python3\ session_manager.py
-complete -F _session_manager_completions ./session_manager.py
+complete -o nospace -F _session_manager_completions session_manager.py
+complete -o nospace -F _session_manager_completions python3\ session_manager.py
+complete -o nospace -F _session_manager_completions ./session_manager.py
+
+# completions for the installed binary
+complete -o nospace -F _session_manager_completions sessionmanager
 
 # completions for aliases
-complete -F _session_manager_completions sm
+complete -o nospace -F _session_manager_completions sm
 complete -W "start stop status" sm-start
 complete -W "start stop status" sm-stop
 complete -W "start stop status" sm-status

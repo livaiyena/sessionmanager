@@ -49,3 +49,5 @@ whitelist.txt
 *.tar.xz
 pkg/
 *.src.tar.gz
+.SRCINFO
+aur-sessionmanager/

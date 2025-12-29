@@ -73,6 +73,19 @@ complete -c session_manager.py -n "__fish_seen_subcommand_from whitelist; and __
 # whitelist remove with current whitelist completion
 complete -c session_manager.py -n "__fish_seen_subcommand_from whitelist; and __fish_seen_subcommand_from remove" -l app -d "application class" -a "(test -f ~/.local/share/sessionmanager/whitelist.txt; and grep -v '^#' ~/.local/share/sessionmanager/whitelist.txt | grep -v '^$')"
 
+# completions for installed binary (sessionmanager)
+complete -c sessionmanager -f
+complete -c sessionmanager -n "__fish_use_subcommand" -a "monitor" -d "monitor daemon control"
+complete -c sessionmanager -n "__fish_use_subcommand" -a "session" -d "session management"
+complete -c sessionmanager -n "__fish_use_subcommand" -a "report" -d "activity reports"
+complete -c sessionmanager -n "__fish_use_subcommand" -a "macro" -d "macro management"
+complete -c sessionmanager -n "__fish_use_subcommand" -a "whitelist" -d "protected apps management"
+complete -c sessionmanager -n "__fish_seen_subcommand_from monitor" -a "start stop status"
+complete -c sessionmanager -n "__fish_seen_subcommand_from session" -a "start stop current"
+complete -c sessionmanager -n "__fish_seen_subcommand_from report" -a "daily weekly"
+complete -c sessionmanager -n "__fish_seen_subcommand_from macro" -a "list create delete run"
+complete -c sessionmanager -n "__fish_seen_subcommand_from whitelist" -a "list add remove"
+
 # completions for sm alias
 complete -c sm -f
 complete -c sm -n "__fish_use_subcommand" -a "monitor session report macro whitelist"

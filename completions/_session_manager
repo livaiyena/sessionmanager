@@ -180,5 +180,6 @@ _session_whitelisted_apps() {
 
 _session_manager "$@"
 
-# completion for sm alias
+# completion for installed binary and aliases
+compdef _session_manager sessionmanager
 compdef _session_manager sm
