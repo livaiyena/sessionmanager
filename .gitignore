@@ -48,5 +48,4 @@ whitelist.txt
 *.tar.gz
 *.tar.xz
 pkg/
-src/
 *.src.tar.gz
