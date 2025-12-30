@@ -1,6 +1,6 @@
 # Maintainer: Livaiyena <livaiyena@users.noreply.github.com>
 pkgname=sessionmanager
-pkgver=0.0.3
+pkgver=0.0.5
 pkgrel=1
 pkgdesc="cli-based activity tracker and session manager for hyprland"
 arch=('any')

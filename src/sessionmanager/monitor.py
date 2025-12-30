@@ -20,7 +20,11 @@ class HyprlandMonitor:
     
     @staticmethod
     def get_active_window() -> Optional[Dict]:
-        """get information about the currently active window"""
+        """get information about the currently active window
+        
+        returns:
+            dict with keys: class, title, pid or None if no active window
+        """
         try:
             result = subprocess.run(
                 ['hyprctl', 'activewindow', '-j'],
@@ -51,6 +55,7 @@ class MonitorDaemon:
     """background daemon that monitors window activity"""
     
     def __init__(self):
+        """initialize monitor daemon with database and signal handlers"""
         self.db = Database(DB_PATH)
         self.running = True
         signal.signal(signal.SIGTERM, self._handle_signal)
@@ -110,14 +115,18 @@ class MonitorDaemon:
                 time.sleep(POLL_INTERVAL)
             
             except Exception as e:
-                print(f"error in monitoring loop: {e}")
+                print(f"error in monitoring loop: {e.__class__.__name__}: {e}")
                 time.sleep(POLL_INTERVAL)
         
         self.db.close()
         print("monitor stopped")
     
     def _enforce_session(self, session_id: int):
-        """enforce session expiration by terminating tracked pids"""
+        """enforce session expiration by terminating tracked pids
+        
+        args:
+            session_id: id of the session to enforce
+        """
         pids = self.db.get_session_pids(session_id)
         self.db.end_session(session_id, 'expired')
         SessionEnforcer.terminate_pids(pids)

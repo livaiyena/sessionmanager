@@ -75,26 +75,68 @@ class Database:
         
         self.conn.commit()
     
+    def __enter__(self):
+        """context manager entry - returns self for use in with statements"""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """context manager exit - ensures database is properly closed
+        
+        args:
+            exc_type: exception type if an error occurred
+            exc_val: exception value if an error occurred
+            exc_tb: exception traceback if an error occurred
+        """
+        self.close()
+        return False  # dont suppress exceptions
+    
     def log_activity(self, app_class: str, window_title: str, topic: str, pid: int):
-        """log a window focus event to the database"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            INSERT INTO activities (timestamp, app_class, window_title, topic, pid)
-            VALUES (?, ?, ?, ?, ?)
-        """, (datetime.now().isoformat(), app_class, window_title, topic, pid))
-        self.conn.commit()
+        """log a window focus event to the database
+        
+        args:
+            app_class: application class name
+            window_title: window title text
+            topic: session topic or 'Others'
+            pid: process id
+        """
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                INSERT INTO activities (timestamp, app_class, window_title, topic, pid)
+                VALUES (?, ?, ?, ?, ?)
+            """, (datetime.now().isoformat(), app_class, window_title, topic, pid))
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"error logging activity: {e}")
     
     def get_last_activity(self) -> Optional[Dict]:
-        """get the most recent activity logged"""
-        cursor = self.conn.cursor()
-        cursor.execute("""
-            SELECT * FROM activities ORDER BY id DESC LIMIT 1
-        """)
-        row = cursor.fetchone()
-        return dict(row) if row else None
+        """get the most recent activity logged
+        
+        returns:
+            dict with activity data or None if no activities exist
+        """
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                SELECT * FROM activities ORDER BY id DESC LIMIT 1
+            """)
+            row = cursor.fetchone()
+            return dict(row) if row else None
+        except sqlite3.Error as e:
+            print(f"error getting last activity: {e}")
+            return None
     
     def create_session(self, topic: str, description: str, duration_minutes: int) -> int:
-        """create a new work session and return its id"""
+        """create a new work session and return its id
+        
+        args:
+            topic: session topic/category
+            description: detailed description
+            duration_minutes: session duration in minutes
+            
+        returns:
+            session id of created session
+        """
         cursor = self.conn.cursor()
         cursor.execute("""
             INSERT INTO sessions (topic, description, start_time, duration_minutes, status)

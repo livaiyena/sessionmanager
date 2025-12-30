@@ -9,7 +9,9 @@ A comprehensive CLI-based activity tracker and session manager for Arch Linux ru
 - **Session Enforcement**: Automatically terminates applications when session timer expires
 - **Macro System**: Save reusable session templates for quick access
 - **Activity Reports**: View daily and weekly summaries of time spent per application
+- **Application Whitelist**: Protect critical applications from session enforcement
 - **Zero Dependencies**: Pure Python 3 with standard library only
+- **Robust Error Handling**: Graceful degradation and comprehensive error messages
 
 ## Requirements
 
@@ -46,7 +48,9 @@ The package installs everything system-wide:
 
 > **Note:** For most users, the AUR installation is recommended. Manual installation is primarily for development or testing purposes.
 
-For development or manual installation:
+The manual installation script installs everything to `~/.local` for user-level access.
+
+#### Quick Installation
 
 1. Clone this repository:
 ```bash
@@ -54,22 +58,50 @@ git clone https://github.com/livaiyena/sessionmanager.git
 cd sessionmanager
 ```
 
-2. Make the script executable:
-```bash
-chmod +x sessionmanager
-```
-
-3. (Optional) Run the installation script for legacy shell aliases:
+2. Run the installation script:
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-> **Warning:** `install.sh` creates legacy aliases (sm, sm-start, etc.) that are no longer actively maintained. For modern usage, use the `sessionmanager` command directly with shell completion.
+This will install:
+- SessionManager binary → `~/.local/bin/sessionmanager`
+- Python package → `~/.local/lib/python3.x/site-packages/`
+- Systemd service → `~/.config/systemd/user/sessionmanager.service`
+- Shell completions → Bash, Zsh, and Fish
+- Documentation → `~/.local/share/doc/sessionmanager/`
 
-4. Manually start the monitor daemon:
+3. Ensure `~/.local/bin` is in your PATH:
 ```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+4. Start the service:
+```bash
+# Option 1: Manual start
 sessionmanager monitor start
+
+# Option 2: Use systemd (recommended)
+systemctl --user enable sessionmanager
+systemctl --user start sessionmanager
+```
+
+#### Alternative: Pip Installation
+
+For development with editable install:
+```bash
+git clone https://github.com/livaiyena/sessionmanager.git
+cd sessionmanager
+pip install --user -e .
+```
+
+#### Uninstall
+
+To remove the manual installation:
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
 ```
 
 ## Usage
@@ -160,16 +192,29 @@ sessionmanager report weekly
 sessionmanager/
 ├── src/
 │   └── sessionmanager/          # Python package with all modules
-│       ├── __init__.py          # Package metadata
+│       ├── __init__.py          # Package metadata (v0.0.5)
 │       ├── config.py            # Configuration constants
-│       ├── database.py          # SQLite operations
+│       ├── database.py          # SQLite operations with context manager
 │       ├── monitor.py           # Hyprland monitoring daemon
 │       ├── enforcer.py          # PID termination logic
+│       ├── whitelist.py         # Protected applications management
 │       └── cli.py               # CLI interface
+├── completions/                 # Shell completion scripts
+│   ├── sessionmanager.bash      # Bash completion
+│   ├── _sessionmanager          # Zsh completion
+│   └── sessionmanager.fish      # Fish completion
+├── aur-sessionmanager/          # AUR package files
+│   ├── PKGBUILD                 # AUR package build script
+│   └── .SRCINFO                 # AUR package metadata
 ├── sessionmanager               # Main entry point (binary)
+├── sessionmanager.service       # Systemd user service file
+├── install.sh                   # Full installation script
+├── uninstall.sh                 # Removal script
+├── setup.py                     # Python package setup
+├── PKGBUILD                     # Main package build script
+├── CHANGELOG.md                 # Version history
 ├── README.md                    # This file
-├── install.sh                   # Alias installer
-└── sessionmanager.service       # Systemd service file
+└── LICENSE                      # GPL-3.0 license
 ```
 
 ## How It Works
@@ -206,9 +251,10 @@ All data is stored in `~/.local/share/sessionmanager/activity.db` using SQLite w
 
 The application is organized into focused modules:
 - **config.py**: Central configuration with all constants
-- **database.py**: Complete SQLite abstraction layer
+- **database.py**: Complete SQLite abstraction layer with context manager support
 - **monitor.py**: Hyprland integration and daemon logic
 - **enforcer.py**: Session enforcement and PID termination
+- **whitelist.py**: Protected applications management with file-based storage
 - **cli.py**: All command-line interface implementations
 - **sessionmanager**: Lightweight entry point with argparse
 
@@ -259,6 +305,33 @@ If the daemon crashes, you may have a stale PID file:
 rm ~/.local/share/sessionmanager/monitor.pid
 ```
 
+The latest version (0.0.5+) includes improved PID file cleanup that prevents most stale file issues.
+
+## Changelog
+
+### Version 0.0.5 (2025-12-30)
+
+**Critical Bug Fixes:**
+- Fixed `sessionmanager.service` incorrect file paths that prevented systemd service from starting
+- Removed problematic sys.path manipulation that could cause import conflicts
+- Enhanced PID file cleanup with try-finally blocks to prevent stale files
+
+**Code Quality Improvements:**
+- Refactored duplicate report generation code (reduced ~45 lines)
+- Added database context manager support for proper resource management
+- Enhanced error handling across all modules (database, whitelist, enforcer)
+- Improved error messages with detailed exception information
+
+**Documentation:**
+- Added comprehensive docstrings with parameter and return type documentation
+- Enhanced install.sh with better error handling and user feedback
+- Improved inline comments and code documentation
+
+**Maintenance:**
+- Maintained modular architecture and code structure
+- Preserved all existing comments and functionality
+- All modules passed syntax validation
+
 
 
 ## Example Workflow
@@ -304,8 +377,9 @@ yay -S sessionmanager
 ### Manual Installation
 
 ```bash
-cd ~/Documents/sessionmanager
+cd /path/to/sessionmanager
 git pull origin main
+# Optionally reinstall completions
 ./install.sh
 ```
 
@@ -314,7 +388,8 @@ git pull origin main
 - The session enforcement feature will **forcefully terminate applications**, which may result in data loss if users have unsaved work
 - The daemon runs with user privileges and can only terminate processes owned by the user
 - PIDs are tracked per session, so only applications accessed during a specific session are terminated
-- Consider adding important applications to a whitelist if you modify the code
+- Use the built-in whitelist feature (`sessionmanager whitelist add`) to protect critical applications from termination
+- Default protected applications include Hyprland, systemd, dbus, waybar, and dunst
 
 ## License
 

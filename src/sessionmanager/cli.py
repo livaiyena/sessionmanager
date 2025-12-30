@@ -4,13 +4,9 @@ command line interface for session manager
 
 import os
 import signal
-import sys
-from pathlib import Path
 import time
+from pathlib import Path
 from datetime import datetime, timedelta
-
-# add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from sessionmanager.config import DB_PATH, PID_FILE
 from sessionmanager.database import Database
@@ -63,22 +59,30 @@ class CLI:
             with open(PID_FILE) as f:
                 pid = int(f.read().strip())
             
-            os.kill(pid, signal.SIGTERM)
-            print(f"sent stop signal to monitor (pid {pid})")
+            try:
+                os.kill(pid, signal.SIGTERM)
+                print(f"sent stop signal to monitor (pid {pid})")
+                
+                # wait for process to terminate
+                for _ in range(10):
+                    time.sleep(0.5)
+                    try:
+                        os.kill(pid, 0)
+                    except ProcessLookupError:
+                        break
+                
+                print("monitor stopped")
             
-            # wait for process to terminate
-            for _ in range(10):
-                time.sleep(0.5)
-                try:
-                    os.kill(pid, 0)
-                except ProcessLookupError:
-                    break
-            
-            PID_FILE.unlink()
-            print("monitor stopped")
+            except ProcessLookupError:
+                print("monitor process not found")
+            except PermissionError:
+                print(f"permission denied to stop monitor (pid {pid})")
         
-        except (ProcessLookupError, ValueError) as e:
-            print(f"error stopping monitor: {e}")
+        except ValueError as e:
+            print(f"invalid pid file: {e}")
+        
+        finally:
+            # always clean up pid file
             if PID_FILE.exists():
                 PID_FILE.unlink()
     
@@ -170,25 +174,7 @@ class CLI:
         
         print("daily activity report")
         print("=" * 60)
-        
-        current_topic = None
-        topic_total = 0
-        
-        for entry in data:
-            if entry['topic'] != current_topic:
-                if current_topic:
-                    print(f"  total: {self._format_duration(topic_total)}")
-                    print()
-                current_topic = entry['topic']
-                topic_total = 0
-                print(f"{current_topic}:")
-            
-            topic_total += entry['seconds']
-            duration = self._format_duration(entry['seconds'])
-            print(f"  {entry['app_class']}: {duration}")
-        
-        if current_topic:
-            print(f"  total: {self._format_duration(topic_total)}")
+        self._print_report(data)
     
     def report_weekly(self):
         """show weekly activity report"""
@@ -200,25 +186,7 @@ class CLI:
         
         print("weekly activity report (past 7 days)")
         print("=" * 60)
-        
-        current_topic = None
-        topic_total = 0
-        
-        for entry in data:
-            if entry['topic'] != current_topic:
-                if current_topic:
-                    print(f"  total: {self._format_duration(topic_total)}")
-                    print()
-                current_topic = entry['topic']
-                topic_total = 0
-                print(f"{current_topic}:")
-            
-            topic_total += entry['seconds']
-            duration = self._format_duration(entry['seconds'])
-            print(f"  {entry['app_class']}: {duration}")
-        
-        if current_topic:
-            print(f"  total: {self._format_duration(topic_total)}")
+        self._print_report(data)
     
     def macro_list(self):
         """list all saved macros"""
@@ -291,9 +259,41 @@ class CLI:
         else:
             print(f"{app_class} is not in whitelist")
     
+    def _print_report(self, data: list):
+        """helper method to print formatted activity report
+        
+        args:
+            data: list of activity entries with topic, app_class, and seconds
+        """
+        current_topic = None
+        topic_total = 0
+        
+        for entry in data:
+            if entry['topic'] != current_topic:
+                if current_topic:
+                    print(f"  total: {self._format_duration(topic_total)}")
+                    print()
+                current_topic = entry['topic']
+                topic_total = 0
+                print(f"{current_topic}:")
+            
+            topic_total += entry['seconds']
+            duration = self._format_duration(entry['seconds'])
+            print(f"  {entry['app_class']}: {duration}")
+        
+        if current_topic:
+            print(f"  total: {self._format_duration(topic_total)}")
+    
     @staticmethod
     def _format_duration(seconds: int) -> str:
-        """format seconds as human readable duration"""
+        """format seconds as human readable duration
+        
+        args:
+            seconds: duration in seconds
+            
+        returns:
+            formatted string like '2h 30m 15s'
+        """
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
         secs = seconds % 60

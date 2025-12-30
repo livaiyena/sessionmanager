@@ -16,7 +16,17 @@ class SessionEnforcer:
     
     @staticmethod
     def terminate_pids(pids_with_apps: List[Tuple[int, str]]):
-        """terminate a list of pids gracefully then forcefully if needed"""
+        """terminate a list of pids gracefully then forcefully if needed
+        
+        args:
+            pids_with_apps: list of tuples containing (pid, app_class) pairs
+            
+        process:
+            1. filters out whitelisted applications
+            2. sends sigterm to all processes
+            3. waits TERM_WAIT_SECONDS
+            4. sends sigkill to any remaining processes
+        """
         if not pids_with_apps:
             return
         
