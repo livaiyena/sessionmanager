@@ -42,13 +42,16 @@ The package installs everything system-wide:
 - Systemd service: `/usr/lib/systemd/user/sessionmanager.service`
 - Documentation: `/usr/share/doc/sessionmanager/`
 
-### Manual Installation (Development)
+### Manual Installation (Development/Testing)
 
-For development or if you prefer manual installation:
+> **Note:** For most users, the AUR installation is recommended. Manual installation is primarily for development or testing purposes.
 
-1. Clone or download this repository:
+For development or manual installation:
+
+1. Clone this repository:
 ```bash
-cd ~/Documents/sessionmanager
+git clone https://github.com/livaiyena/sessionmanager.git
+cd sessionmanager
 ```
 
 2. Make the script executable:
@@ -56,18 +59,13 @@ cd ~/Documents/sessionmanager
 chmod +x sessionmanager
 ```
 
-3. Run the installation script for aliases:
+3. (Optional) Run the installation script for legacy shell aliases:
 ```bash
 chmod +x install.sh
 ./install.sh
-source ~/.bashrc  # for bash
-# or
-source ~/.zshrc   # for zsh
-# or
-source ~/.config/fish/config.fish  # for fish
 ```
 
-The installer automatically detects and configures Bash, Zsh, and Fish shells.
+> **Warning:** `install.sh` creates legacy aliases (sm, sm-start, etc.) that are no longer actively maintained. For modern usage, use the `sessionmanager` command directly with shell completion.
 
 4. Manually start the monitor daemon:
 ```bash

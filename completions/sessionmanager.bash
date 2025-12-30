@@ -1,4 +1,4 @@
-# Bash completion for sessionmanager
+# bash completion for sessionmanager
 
 _session_manager_completions()
 {
@@ -161,15 +161,6 @@ _session_manager_completions()
     return 0
 }
 
-complete -o nospace -F _session_manager_completions sessionmanager
-complete -o nospace -F _session_manager_completions python3\ sessionmanager
-complete -o nospace -F _session_manager_completions ./sessionmanager
 
-# completions for the installed binary
-complete -o nospace -F _session_manager_completions sessionmanager
 
-# completions for aliases
-complete -o nospace -F _session_manager_completions sm
-complete -W "start stop status" sm-start
-complete -W "start stop status" sm-stop
-complete -W "start stop status" sm-status
+complete -o nospace -F _session_manager_completions sessionmanager

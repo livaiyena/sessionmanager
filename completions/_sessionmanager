@@ -1,185 +1,104 @@
 #compdef sessionmanager
 
-# Zsh completion for sessionmanager
+# zsh completion for sessionmanager
 
-_session_manager() {
-    local line state
-    
+_sessionmanager() {
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
     _arguments -C \
         '1: :->command' \
         '*::arg:->args'
-    
+
     case $state in
         command)
-            _values 'commands' \
-                'monitor[monitor daemon control]' \
-                'session[session management]' \
-                'report[activity reports]' \
-                'macro[macro management]' \
-                'whitelist[protected apps management]'
+            local -a commands
+            commands=(
+                'monitor:monitor daemon control'
+                'session:session management'
+                'report:activity reports'
+                'macro:macro management'
+                'whitelist:protected apps management'
+            )
+            _describe -t commands 'sessionmanager commands' commands
             ;;
         args)
             case $line[1] in
                 monitor)
-                    _values 'monitor commands' \
-                        'start[start monitoring daemon]' \
-                        'stop[stop monitoring daemon]' \
-                        'status[check daemon status]'
+                    _arguments \
+                        '1: :(start stop status)'
                     ;;
                 session)
-                    _session_session
+                    local -a session_cmds
+                    session_cmds=(
+                        'start:start work session'
+                        'stop:end current session'
+                        'current:show current session info'
+                    )
+                    
+                    if (( CURRENT == 2 )); then
+                        _describe -t session-commands 'session commands' session_cmds
+                    elif [[ $words[2] == "start" ]]; then
+                        _arguments \
+                            '--topic[session topic]:topic:' \
+                            '--description[session description]:description:' \
+                            '--duration[duration in minutes]:duration:' \
+                            '--macro[use saved macro]:macro:'
+                    fi
                     ;;
                 report)
-                    _values 'report commands' \
-                        'daily[daily activity summary]' \
-                        'weekly[weekly activity summary]'
+                    _arguments \
+                        '1: :(daily weekly)'
                     ;;
                 macro)
-                    _session_macro
+                    local -a macro_cmds
+                    macro_cmds=(
+                        'list:list saved macros'
+                        'create:create new macro'
+                        'delete:delete macro'
+                        'run:run saved macro'
+                    )
+                    
+                    if (( CURRENT == 2 )); then
+                        _describe -t macro-commands 'macro commands' macro_cmds
+                    else
+                        case $words[2] in
+                            create)
+                                _arguments \
+                                    '--name[macro name]:name:' \
+                                    '--topic[session topic]:topic:' \
+                                    '--description[session description]:description:' \
+                                    '--duration[duration in minutes]:duration:'
+                                ;;
+                            delete|run)
+                                _arguments \
+                                    '--name[macro name]:name:'
+                                ;;
+                        esac
+                    fi
                     ;;
                 whitelist)
-                    _session_whitelist
+                    local -a whitelist_cmds
+                    whitelist_cmds=(
+                        'list:list protected applications'
+                        'add:add protected app'
+                        'remove:remove protected app'
+                    )
+                    
+                    if (( CURRENT == 2 )); then
+                        _describe -t whitelist-commands 'whitelist commands' whitelist_cmds
+                    else
+                        case $words[2] in
+                            add|remove)
+                                _arguments \
+                                    '--app[application class]:app:'
+                                ;;
+                        esac
+                    fi
                     ;;
             esac
             ;;
     esac
 }
 
-_session_session() {
-    local line state
-    
-    _arguments -C \
-        '1: :->subcmd' \
-        '*::arg:->args'
-    
-    case $state in
-        subcmd)
-            _values 'session commands' \
-                'start[start work session]' \
-                'stop[end current session]' \
-                'current[show current session info]'
-            ;;
-        args)
-            case $line[1] in
-                start)
-                    _arguments \
-                        '--topic[session topic]:topic:' \
-                        '--description[session description]:description:' \
-                        '--duration[duration in minutes]:duration:' \
-                        '--macro[use saved macro]:macro:_session_macros'
-                    ;;
-            esac
-            ;;
-    esac
-}
-
-_session_macro() {
-    local line state
-    
-    _arguments -C \
-        '1: :->subcmd' \
-        '*::arg:->args'
-    
-    case $state in
-        subcmd)
-            _values 'macro commands' \
-                'list[list saved macros]' \
-                'create[create new macro]' \
-                'delete[delete macro]' \
-                'run[run saved macro]'
-            ;;
-        args)
-            case $line[1] in
-                create)
-                    _arguments \
-                        '--name[macro name]:name:' \
-                        '--topic[session topic]:topic:' \
-                        '--description[session description]:description:' \
-                        '--duration[duration in minutes]:duration:'
-                    ;;
-                delete|run)
-                    _arguments \
-                        '--name[macro name]:name:_session_macros'
-                    ;;
-            esac
-            ;;
-    esac
-}
-
-_session_whitelist() {
-    local line state
-    
-    _arguments -C \
-        '1: :->subcmd' \
-        '*::arg:->args'
-    
-    case $state in
-        subcmd)
-            _values 'whitelist commands' \
-                'list[list protected applications]' \
-                'add[add protected app]' \
-                'remove[remove protected app]'
-            ;;
-        args)
-            case $line[1] in
-                add)
-                    _arguments \
-                        '--app[application class]:app:_session_available_apps'
-                    ;;
-                remove)
-                    _arguments \
-                        '--app[application class]:app:_session_whitelisted_apps'
-                    ;;
-            esac
-            ;;
-    esac
-}
-
-# get list of saved macros
-_session_macros() {
-    local macros
-    macros=(${(f)"$(sessionmanager macro list 2>/dev/null | grep -E '^[a-zA-Z]' | cut -d: -f1)"})
-    _describe 'macro names' macros
-}
-
-# get available applications from database and desktop files
-_session_available_apps() {
-    local apps db_path
-    db_path="$HOME/.local/share/sessionmanager/activity.db"
-    
-    # get apps from database
-    if [[ -f "$db_path" ]]; then
-        apps=(${(f)"$(sqlite3 "$db_path" "SELECT DISTINCT app_class FROM activities ORDER BY app_class" 2>/dev/null)"})
-    fi
-    
-    # add apps from .desktop files
-    local desktop_apps
-    for desktop in /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop(N); do
-        if [[ -f "$desktop" ]]; then
-            local app=$(grep -E "^(Name|StartupWMClass)=" "$desktop" 2>/dev/null | cut -d= -f2 | head -1)
-            if [[ -n "$app" ]]; then
-                desktop_apps+=("$app")
-            fi
-        fi
-    done
-    
-    apps+=($desktop_apps)
-    _describe 'application classes' apps
-}
-
-# get whitelisted applications
-_session_whitelisted_apps() {
-    local apps whitelist_file
-    whitelist_file="$HOME/.local/share/sessionmanager/whitelist.txt"
-    
-    if [[ -f "$whitelist_file" ]]; then
-        apps=(${(f)"$(grep -v '^#' "$whitelist_file" | grep -v '^$')"})
-        _describe 'whitelisted apps' apps
-    fi
-}
-
-_session_manager "$@"
-
-# completion for installed binary and aliases
-compdef _session_manager sessionmanager
-compdef _session_manager sm
+_sessionmanager "$@"
