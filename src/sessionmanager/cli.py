@@ -163,9 +163,6 @@ class CLI:
             secs = int(time_remaining.total_seconds() % 60)
             print(f"remaining: {mins}m {secs}s")
         else:
-        else:
-            print("status: expired")
-    
             print("status: expired")
     
     def report_daily(self, json_output: bool = False):
