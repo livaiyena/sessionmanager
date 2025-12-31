@@ -251,6 +251,23 @@ class Database:
         """, (limit,))
         return [dict(row) for row in cursor.fetchall()]
     
+    
+    def prune_activities(self, days: int) -> int:
+        """delete activities older than specified days
+        
+        args:
+            days: number of days to keep
+            
+        returns:
+            number of rows deleted
+        """
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM activities WHERE timestamp < ?", (cutoff,))
+        deleted = cursor.rowcount
+        self.conn.commit()
+        return deleted
+
     def close(self):
         """close database connection"""
         self.conn.close()

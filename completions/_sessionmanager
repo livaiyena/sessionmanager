@@ -14,11 +14,12 @@ _sessionmanager() {
         command)
             local -a commands
             commands=(
-                'monitor:monitor daemon control'
-                'session:session management'
-                'report:activity reports'
-                'macro:macro management'
-                'whitelist:protected apps management'
+                'monitor:daemon control'
+                'session:sessions'
+                'report:reports'
+                'macro:macros'
+                'whitelist:whitelist'
+                'cleanup:maintenance'
             )
             _describe -t commands 'sessionmanager commands' commands
             ;;
@@ -31,32 +32,37 @@ _sessionmanager() {
                 session)
                     local -a session_cmds
                     session_cmds=(
-                        'start:start work session'
-                        'stop:end current session'
-                        'current:show current session info'
+                        'start:start session'
+                        'stop:end session'
+                        'current:show info'
                     )
                     
                     if (( CURRENT == 2 )); then
                         _describe -t session-commands 'session commands' session_cmds
                     elif [[ $words[2] == "start" ]]; then
                         _arguments \
-                            '--topic[session topic]:topic:' \
-                            '--description[session description]:description:' \
-                            '--duration[duration in minutes]:duration:' \
-                            '--macro[use saved macro]:macro:'
+                            '--topic[topic]:topic:' \
+                            '--description[description]:description:' \
+                            '--duration[minutes]:duration:' \
+                            '--macro[use macro]:macro:'
                     fi
                     ;;
                 report)
-                    _arguments \
-                        '1: :(daily weekly)'
+                    if (( CURRENT == 2 )); then
+                        _arguments \
+                            '1: :(daily weekly)'
+                    else
+                        _arguments \
+                            '--json[json output]'
+                    fi
                     ;;
                 macro)
                     local -a macro_cmds
                     macro_cmds=(
-                        'list:list saved macros'
-                        'create:create new macro'
+                        'list:list macros'
+                        'create:create macro'
                         'delete:delete macro'
-                        'run:run saved macro'
+                        'run:run macro'
                     )
                     
                     if (( CURRENT == 2 )); then
@@ -65,14 +71,14 @@ _sessionmanager() {
                         case $words[2] in
                             create)
                                 _arguments \
-                                    '--name[macro name]:name:' \
-                                    '--topic[session topic]:topic:' \
-                                    '--description[session description]:description:' \
-                                    '--duration[duration in minutes]:duration:'
+                                    '--name[name]:name:' \
+                                    '--topic[topic]:topic:' \
+                                    '--description[description]:description:' \
+                                    '--duration[minutes]:duration:'
                                 ;;
                             delete|run)
                                 _arguments \
-                                    '--name[macro name]:name:'
+                                    '--name[name]:name:'
                                 ;;
                         esac
                     fi
@@ -80,9 +86,9 @@ _sessionmanager() {
                 whitelist)
                     local -a whitelist_cmds
                     whitelist_cmds=(
-                        'list:list protected applications'
-                        'add:add protected app'
-                        'remove:remove protected app'
+                        'list:list apps'
+                        'add:add app'
+                        'remove:remove app'
                     )
                     
                     if (( CURRENT == 2 )); then
@@ -91,10 +97,14 @@ _sessionmanager() {
                         case $words[2] in
                             add|remove)
                                 _arguments \
-                                    '--app[application class]:app:'
+                                    '--app[app class]:app:'
                                 ;;
                         esac
                     fi
+                    ;;
+                cleanup)
+                    _arguments \
+                        '--days[keep days]:days:'
                     ;;
             esac
             ;;

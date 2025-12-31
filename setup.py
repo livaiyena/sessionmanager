@@ -12,7 +12,7 @@ long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists
 
 # read version from package
 version_file = Path(__file__).parent / "src" / "sessionmanager" / "__init__.py"
-version = "0.0.5"
+version = "0.0.6"
 if version_file.exists():
     for line in version_file.read_text().splitlines():
         if line.startswith("__version__"):

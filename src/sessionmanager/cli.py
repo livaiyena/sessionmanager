@@ -2,6 +2,7 @@
 command line interface for session manager
 """
 
+import json
 import os
 import signal
 import time
@@ -27,7 +28,7 @@ class CLI:
                 with open(PID_FILE) as f:
                     old_pid = int(f.read().strip())
                 os.kill(old_pid, 0)  # check if process exists
-                print(f"monitor already running (pid {old_pid})")
+                print(f"monitor running (pid {old_pid})")
                 return
             except (ProcessLookupError, ValueError):
                 # stale pid file
@@ -61,7 +62,7 @@ class CLI:
             
             try:
                 os.kill(pid, signal.SIGTERM)
-                print(f"sent stop signal to monitor (pid {pid})")
+                print(f"stopping monitor (pid {pid})")
                 
                 # wait for process to terminate
                 for _ in range(10):
@@ -74,9 +75,9 @@ class CLI:
                 print("monitor stopped")
             
             except ProcessLookupError:
-                print("monitor process not found")
+                print("monitor not found")
             except PermissionError:
-                print(f"permission denied to stop monitor (pid {pid})")
+                print(f"permission denied (pid {pid})")
         
         except ValueError as e:
             print(f"invalid pid file: {e}")
@@ -106,8 +107,8 @@ class CLI:
         # check if there is already an active session
         active = self.db.get_active_session()
         if active:
-            print(f"session already active: {active['topic']}")
-            print("stop the current session first")
+            print(f"active session: {active['topic']}")
+            print("stop current session first")
             return
         
         # if using macro, load parameters
@@ -124,10 +125,10 @@ class CLI:
         session_id = self.db.create_session(topic, description, duration)
         end_time = datetime.now() + timedelta(minutes=duration)
         
-        print(f"started session: {topic}")
-        print(f"description: {description}")
-        print(f"duration: {duration} minutes")
-        print(f"will expire at: {end_time.strftime('%H:%M:%S')}")
+        print(f"session: {topic}")
+        print(f"desc: {description}")
+        print(f"duration: {duration}m")
+        print(f"expires: {end_time.strftime('%H:%M:%S')}")
     
     def session_stop(self):
         """manually end the current session"""
@@ -152,9 +153,9 @@ class CLI:
         time_remaining = end_time - datetime.now()
         
         print(f"topic: {active['topic']}")
-        print(f"description: {active['description']}")
-        print(f"started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"duration: {active['duration_minutes']} minutes")
+        print(f"desc: {active['description']}")
+        print(f"start: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"duration: {active['duration_minutes']}m")
         print(f"expires: {end_time.strftime('%H:%M:%S')}")
         
         if time_remaining.total_seconds() > 0:
@@ -162,30 +163,41 @@ class CLI:
             secs = int(time_remaining.total_seconds() % 60)
             print(f"remaining: {mins}m {secs}s")
         else:
-            print("status: expired (waiting for monitor)")
+        else:
+            print("status: expired")
     
-    def report_daily(self):
+            print("status: expired")
+    
+    def report_daily(self, json_output: bool = False):
         """show daily activity report"""
         data = self.db.get_daily_report()
+        
+        if json_output:
+            self._print_json(data)
+            return
         
         if not data:
             print("no activity logged today")
             return
         
-        print("daily activity report")
-        print("=" * 60)
+        print("daily report")
+        print("-" * 40)
         self._print_report(data)
     
-    def report_weekly(self):
+    def report_weekly(self, json_output: bool = False):
         """show weekly activity report"""
         data = self.db.get_weekly_report()
+        
+        if json_output:
+            self._print_json(data)
+            return
         
         if not data:
             print("no activity logged in the past week")
             return
         
-        print("weekly activity report (past 7 days)")
-        print("=" * 60)
+        print("weekly report (7 days)")
+        print("-" * 40)
         self._print_report(data)
     
     def macro_list(self):
@@ -201,8 +213,8 @@ class CLI:
         for macro in macros:
             print(f"{macro['name']}:")
             print(f"  topic: {macro['topic']}")
-            print(f"  description: {macro['description']}")
-            print(f"  duration: {macro['duration_minutes']} minutes")
+            print(f"  desc: {macro['description']}")
+            print(f"  duration: {macro['duration_minutes']}m")
             print()
     
     def macro_create(self, name: str, topic: str, description: str, duration: int):
@@ -240,8 +252,8 @@ class CLI:
             print("no applications in whitelist")
             return
         
-        print("protected applications (will not be terminated):")
-        print("=" * 60)
+        print("protected apps:")
+        print("-" * 40)
         for app in apps:
             print(f"  {app}")
     
@@ -258,6 +270,13 @@ class CLI:
             print(f"removed {app_class} from whitelist")
         else:
             print(f"{app_class} is not in whitelist")
+    
+            print(f"{app_class} is not in whitelist")
+    
+    def cleanup(self, days: int):
+        """cleanup old activity logs"""
+        deleted = self.db.prune_activities(days)
+        print(f"deleted {deleted} entries older than {days} days")
     
     def _print_report(self, data: list):
         """helper method to print formatted activity report
@@ -283,6 +302,11 @@ class CLI:
         
         if current_topic:
             print(f"  total: {self._format_duration(topic_total)}")
+            
+    @staticmethod
+    def _print_json(data: list):
+        """print data as json"""
+        print(json.dumps(data, indent=2))
     
     @staticmethod
     def _format_duration(seconds: int) -> str:

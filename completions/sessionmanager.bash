@@ -8,7 +8,7 @@ _session_manager_completions()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # main commands
-    local commands="monitor session report macro whitelist"
+    local commands="monitor session report macro whitelist cleanup"
     
     # get command context
     local cmd=""
@@ -62,6 +62,16 @@ _session_manager_completions()
     if [ "${cmd}" = "report" ] && [ ${COMP_CWORD} -eq 2 ]; then
         COMPREPLY=( $(compgen -W "daily weekly" -- ${cur}) )
         return 0
+    fi
+    
+    # report options
+    if [ "${cmd}" = "report" ]; then
+        case "${prev}" in
+            daily|weekly)
+                 COMPREPLY=( $(compgen -W "--json" -- ${cur}) )
+                 return 0
+                 ;;
+        esac
     fi
     
     # macro subcommands
@@ -156,6 +166,13 @@ _session_manager_completions()
                 esac
                 ;;
         esac
+        esac
+    fi
+    
+    # cleanup options
+    if [ "${cmd}" = "cleanup" ]; then
+        COMPREPLY=( $(compgen -W "--days" -- ${cur}) )
+        return 0
     fi
     
     return 0

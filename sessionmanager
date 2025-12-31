@@ -10,66 +10,75 @@ import argparse
 from sessionmanager.cli import CLI
 
 
+
 def main():
-    """main entry point with argument parsing"""
+    """main entry point"""
     parser = argparse.ArgumentParser(
-        description='session manager and activity tracker for hyprland'
+        description='activity tracker for hyprland'
     )
-    subparsers = parser.add_subparsers(dest='command', help='available commands')
+    subparsers = parser.add_subparsers(dest='command', help='commands')
     
-    # monitor commands
-    monitor_parser = subparsers.add_parser('monitor', help='monitor daemon control')
+    # monitor
+    monitor_parser = subparsers.add_parser('monitor', help='daemon control')
     monitor_subparsers = monitor_parser.add_subparsers(dest='action')
-    monitor_subparsers.add_parser('start', help='start monitoring daemon')
-    monitor_subparsers.add_parser('stop', help='stop monitoring daemon')
-    monitor_subparsers.add_parser('status', help='check daemon status')
+    monitor_subparsers.add_parser('start', help='start daemon')
+    monitor_subparsers.add_parser('stop', help='stop daemon')
+    monitor_subparsers.add_parser('status', help='daemon status')
     
-    # session commands
-    session_parser = subparsers.add_parser('session', help='session management')
+    # session
+    session_parser = subparsers.add_parser('session', help='sessions')
     session_subparsers = session_parser.add_subparsers(dest='action')
     
-    start_parser = session_subparsers.add_parser('start', help='start work session')
-    start_parser.add_argument('--topic', help='session topic')
-    start_parser.add_argument('--description', help='session description')
-    start_parser.add_argument('--duration', type=int, help='duration in minutes')
-    start_parser.add_argument('--macro', help='use saved macro template')
+    start_parser = session_subparsers.add_parser('start', help='start session')
+    start_parser.add_argument('--topic', help='topic')
+    start_parser.add_argument('--description', help='description')
+    start_parser.add_argument('--duration', type=int, help='minutes')
+    start_parser.add_argument('--macro', help='use macro')
     
-    session_subparsers.add_parser('stop', help='end current session')
-    session_subparsers.add_parser('current', help='show current session info')
+    session_subparsers.add_parser('stop', help='end session')
+    session_subparsers.add_parser('current', help='show info')
     
-    # report commands
-    report_parser = subparsers.add_parser('report', help='activity reports')
+    # report
+    report_parser = subparsers.add_parser('report', help='reports')
     report_subparsers = report_parser.add_subparsers(dest='action')
-    report_subparsers.add_parser('daily', help='daily activity summary')
-    report_subparsers.add_parser('weekly', help='weekly activity summary')
+    report_subparsers = report_parser.add_subparsers(dest='action')
+    daily_parser = report_subparsers.add_parser('daily', help='daily summary')
+    daily_parser.add_argument('--json', action='store_true', help='json output')
     
-    # macro commands
-    macro_parser = subparsers.add_parser('macro', help='macro management')
+    weekly_parser = report_subparsers.add_parser('weekly', help='weekly summary')
+    weekly_parser.add_argument('--json', action='store_true', help='json output')
+    
+    # macro
+    macro_parser = subparsers.add_parser('macro', help='macros')
     macro_subparsers = macro_parser.add_subparsers(dest='action')
-    macro_subparsers.add_parser('list', help='list saved macros')
+    macro_subparsers.add_parser('list', help='list macros')
     
-    create_parser = macro_subparsers.add_parser('create', help='create new macro')
-    create_parser.add_argument('--name', required=True, help='macro name')
-    create_parser.add_argument('--topic', required=True, help='session topic')
-    create_parser.add_argument('--description', required=True, help='session description')
-    create_parser.add_argument('--duration', type=int, required=True, help='duration in minutes')
+    create_parser = macro_subparsers.add_parser('create', help='create macro')
+    create_parser.add_argument('--name', required=True, help='name')
+    create_parser.add_argument('--topic', required=True, help='topic')
+    create_parser.add_argument('--description', required=True, help='description')
+    create_parser.add_argument('--duration', type=int, required=True, help='minutes')
     
     delete_parser = macro_subparsers.add_parser('delete', help='delete macro')
-    delete_parser.add_argument('--name', required=True, help='macro name')
+    delete_parser.add_argument('--name', required=True, help='name')
     
-    run_parser = macro_subparsers.add_parser('run', help='run saved macro')
-    run_parser.add_argument('--name', required=True, help='macro name')
+    run_parser = macro_subparsers.add_parser('run', help='run macro')
+    run_parser.add_argument('--name', required=True, help='name')
     
-    # whitelist commands
-    whitelist_parser = subparsers.add_parser('whitelist', help='protected apps management')
+    # cleanup
+    cleanup_parser = subparsers.add_parser('cleanup', help='maintenance')
+    cleanup_parser.add_argument('--days', type=int, default=30, help='keep days (default 30)')
+    
+    # whitelist
+    whitelist_parser = subparsers.add_parser('whitelist', help='whitelist')
     whitelist_subparsers = whitelist_parser.add_subparsers(dest='action')
-    whitelist_subparsers.add_parser('list', help='list protected applications')
+    whitelist_subparsers.add_parser('list', help='list apps')
     
-    add_whitelist_parser = whitelist_subparsers.add_parser('add', help='add protected app')
-    add_whitelist_parser.add_argument('--app', required=True, help='application class to protect')
+    add_whitelist_parser = whitelist_subparsers.add_parser('add', help='add app')
+    add_whitelist_parser.add_argument('--app', required=True, help='app class')
     
-    remove_whitelist_parser = whitelist_subparsers.add_parser('remove', help='remove protected app')
-    remove_whitelist_parser.add_argument('--app', required=True, help='application class to unprotect')
+    remove_whitelist_parser = whitelist_subparsers.add_parser('remove', help='remove app')
+    remove_whitelist_parser.add_argument('--app', required=True, help='app class')
     
     args = parser.parse_args()
     
@@ -79,7 +88,7 @@ def main():
     
     cli = CLI()
     
-    # route commands
+    # route
     if args.command == 'monitor':
         if args.action == 'start':
             cli.monitor_start()
@@ -97,7 +106,7 @@ def main():
             elif args.topic and args.description and args.duration:
                 cli.session_start(args.topic, args.description, args.duration)
             else:
-                print("error: provide either --macro or --topic --description --duration")
+                print("error: use --macro or --topic --description --duration")
                 start_parser.print_help()
         elif args.action == 'stop':
             cli.session_stop()
@@ -108,9 +117,9 @@ def main():
     
     elif args.command == 'report':
         if args.action == 'daily':
-            cli.report_daily()
+            cli.report_daily(args.json)
         elif args.action == 'weekly':
-            cli.report_weekly()
+            cli.report_weekly(args.json)
         else:
             report_parser.print_help()
     
@@ -126,6 +135,9 @@ def main():
         else:
             macro_parser.print_help()
     
+    elif args.command == 'cleanup':
+        cli.cleanup(args.days)
+    
     elif args.command == 'whitelist':
         if args.action == 'list':
             cli.whitelist_list()
@@ -139,3 +151,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
