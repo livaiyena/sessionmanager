@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.8] - 2025-12-31
+
+### Fixed
+-   **CRITICAL**: Fixed argparse error (duplicate add_subparsers call in sessionmanager).
+
 ## [0.0.7] - 2025-12-31
 
 ### Fixed
@@ -66,6 +71,7 @@
 
 ---
 
+[0.0.8]: https://github.com/livaiyena/sessionmanager/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/livaiyena/sessionmanager/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/livaiyena/sessionmanager/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/livaiyena/sessionmanager/compare/v0.0.4...v0.0.5

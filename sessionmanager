@@ -41,7 +41,6 @@ def main():
     # report
     report_parser = subparsers.add_parser('report', help='reports')
     report_subparsers = report_parser.add_subparsers(dest='action')
-    report_subparsers = report_parser.add_subparsers(dest='action')
     daily_parser = report_subparsers.add_parser('daily', help='daily summary')
     daily_parser.add_argument('--json', action='store_true', help='json output')
     
